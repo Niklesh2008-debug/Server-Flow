@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SERVERFLOW – Server Request Load Distributor</title>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body>
+
+<!-- ============ LOGIN / WELCOME ============ -->
+<div id="login" class="login">
+  <div class="brand">
+    <div class="net">
+      <div class="spoke" style="--a:0deg"></div><div class="spoke" style="--a:60deg"></div><div class="spoke" style="--a:120deg"></div>
+      <div class="spoke" style="--a:180deg"></div><div class="spoke" style="--a:240deg"></div><div class="spoke" style="--a:300deg"></div>
+      <div class="n" style="--a:0deg"></div><div class="n" style="--a:60deg"></div><div class="n" style="--a:120deg"></div>
+      <div class="n" style="--a:180deg"></div><div class="n" style="--a:240deg"></div><div class="n" style="--a:300deg"></div>
+      <div class="hub">⚡</div>
+    </div>
+    <h1>SERVERFLOW</h1>
+    <h3>Intelligent Server Request Distribution</h3>
+    <p class="muted">Efficiently route requests using Priority Queue and Greedy Algorithms.</p>
+  </div>
+  <div class="lcard"><div class="card">
+    <h2>Welcome Back 👋</h2>
+    <label>Username</label><input id="lu" placeholder="e.g. niki" onkeydown="if(event.key==='Enter')login()">
+    <label>Email</label><input id="le" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')login()">
+    <button class="big" onclick="login()">Enter Dashboard →</button>
+    <p class="muted c">Demo Mode — No password required</p>
+    <p class="tiny c"><b>Demo Authentication</b> – this prototype uses local browser storage and does not implement production authentication.</p>
+  </div></div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="app hidden">
+<aside id="side" class="side">
+  <div class="logo">⚡ SERVERFLOW</div>
+  <nav>
+    <button class="nav on" data-p="dashboard" onclick="nav('dashboard')">🏠 Dashboard</button>
+    <button class="nav" data-p="routing" onclick="nav('routing')">📡 Request Routing</button>
+    <button class="nav" data-p="servers" onclick="nav('servers')">🖥 Servers</button>
+    <button class="nav" data-p="analytics" onclick="nav('analytics')">📊 Analytics</button>
+    <button class="nav" data-p="profile" onclick="nav('profile')">👤 Profile</button>
+  </nav>
+  <div class="suser">
+    <div class="av" data-v="uav"></div>
+    <div><b data-v="uname"></b><br><a href="#" onclick="nav('profile');return false">View Profile</a></div>
+  </div>
+  <button class="ghost" style="width:100%" onclick="logout()">Logout</button>
+</aside>
+
+<main>
+<header class="top">
+  <button class="ham" onclick="$('side').classList.toggle('open')">☰</button>
+  <h2 id="title">Dashboard</h2>
+  <span class="pill g sys">● System Online</span>
+  <span class="grow"></span>
+  <button class="bell" onclick="bell()">🔔<i id="badge" class="hidden">0</i></button>
+  <div class="av sm" data-v="uav"></div><b class="hide-s" data-v="uname"></b>
+</header>
+
+<div class="content">
+
+<!-- ---------- DASHBOARD ---------- -->
+<section class="page active" id="p-dashboard">
+  <div class="card hero">
+    <div><h1>Intelligent Request Distribution</h1>
+    <p class="muted">Route every request to the most suitable server using Priority Queue + Greedy selection.</p>
+    <span class="pill g"><i class="dot"></i> Simulation Running</span></div>
+    <div class="btns"><button class="alt" onclick="runDemo()">▶ Run Demo</button>
+    <button onclick="routeNext()">Route Next Request</button>
+    <button class="ghost" onclick="resetSim()">Reset Simulation</button></div>
+  </div>
+  <div class="grid g4" data-v="kpi"></div>
+  <h2 class="sec">Server Load Overview</h2>
+  <div class="grid g3" data-v="srvmini"></div>
+  <div class="grid g2 mt">
+    <div><h2 class="sec">Request Priority Queue</h2>
+      <div class="card"><table><thead><tr><th>Request</th><th>Priority</th><th>Processing Cost</th><th>Status</th></tr></thead><tbody data-v="qtable"></tbody></table>
+      <button class="big" style="margin-top:14px" onclick="routeNext()">Process Next Request →</button></div></div>
+    <div><h2 class="sec">Why was this server selected?</h2><div class="card" data-v="decision"></div></div>
+  </div>
+  </section>
+
+<!-- ---------- REQUEST ROUTING ---------- -->
+<section class="page" id="p-routing">
+  <h1>Request Routing</h1><p class="muted">Route incoming requests intelligently.</p>
+  <div class="grid g2 mt">
+    <div class="card"><h2>New Request</h2>
+      <label>Request ID (optional)</label><input id="ri" placeholder="auto e.g. R6">
+      <label>Priority (1–10)</label><input id="rp" type="number" min="1" max="10" value="5">
+      <label>Processing Cost</label><input id="rc" type="number" min="1" value="20">
+      <div class="btns"><button onclick="addReq()">Add Request</button>
+      <button class="ghost" onclick="api('request',{generate:3}).then(d=>d&&toast('✓ 3 sample requests generated','ok'))">Generate Sample Requests</button></div>
+      <p class="note">Greedy rule: <b>Score = Queue Length + Response Cost</b>. The Greedy Algorithm makes the best locally feasible server-selection decision at each routing step. It does not guarantee a globally optimal load distribution.</p></div>
+    <div class="card"><h2>Priority Queue (heapq)</h2><div data-v="qstack"></div>
+      <button class="big" style="width:100%;margin-top:14px" onclick="routeNext()">ROUTE NEXT REQUEST</button></div>
+  </div>
+  <h2 class="sec">Why was this server selected?</h2><div class="card" data-v="decision"></div>
+  <h2 class="sec">Routing History</h2>
+  <div class="card"><div class="btns" style="margin:0 0 10px"><button class="chip on" data-f="all" onclick="setF('all')">All</button><button class="chip" data-f="completed" onclick="setF('completed')">Completed</button><button class="chip" data-f="pending" onclick="setF('pending')">Pending</button></div>
+  <table><thead><tr><th>Time</th><th>Request</th><th>Priority</th><th>Server</th><th>Score</th><th>Status</th></tr></thead><tbody data-v="history"></tbody></table></div>
+</section>
+
+<!-- ---------- SERVERS ---------- -->
+<section class="page" id="p-servers">
+  <div class="row"><div><h1>Server Management</h1><p class="muted">Add, monitor and remove servers.</p></div>
+  <button class="big" onclick="openM('m-server')">+ Add Server</button></div>
+  <div class="grid g3 mt" data-v="srvbig"></div>
+</section>
+
+<!-- ---------- ANALYTICS ---------- -->
+<section class="page" id="p-analytics">
+  <h1>Performance Analytics</h1>
+  <div class="grid g2 mt" data-v="analytics"></div>
+</section>
+
+<!-- ---------- PROFILE ---------- -->
+<section class="page" id="p-profile">
+  <div class="card hero"><div class="row" style="justify-content:flex-start;gap:20px"><div class="av xl" data-v="uav"></div>
+    <div><h1 style="margin:0">My Profile</h1><h3 data-v="uname"></h3><p class="muted">Participant</p></div></div>
+    <button onclick="openM('m-profile')">✎ Edit Profile</button></div>
+  <div class="grid g3 mt" data-v="profile"></div>
+  <p class="tiny c"><b>Demo Authentication</b> – this prototype uses local browser storage and does not implement production authentication.</p>
+</section>
+
+</div></main></div>
+
+<!-- ============ MODALS + TOASTS ============ -->
+<div class="mbg" id="m-server" onclick="if(event.target===this)closeM()"><div class="card modal"><h2>Add Server</h2>
+  <label>Server ID (optional)</label><input id="si" placeholder="auto e.g. S4">
+  <label>Capacity</label><input id="sc" type="number" value="10">
+  <label>Initial Queue</label><input id="sq" type="number" value="0">
+  <label>Response Cost (ms)</label><input id="sr" type="number" value="30">
+  <div class="btns"><button onclick="addServer()">Add Server</button><button class="ghost" onclick="closeM()">Cancel</button></div></div></div>
+<div class="mbg" id="m-profile" onclick="if(event.target===this)closeM()"><div class="card modal"><h2>Edit Profile</h2>
+  <label>Name</label><input id="pn"><label>Email</label><input id="pe"><label>Role</label><input id="pr">
+  <div class="btns"><button onclick="saveProfile()">Save</button><button class="ghost" onclick="closeM()">Cancel</button></div></div></div>
+<div id="toasts"></div>
+<script src="/static/script.js"></script></body></html>
